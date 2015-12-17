@@ -18,12 +18,18 @@ const TorButton = new Lang.Class({
 
     _init: function(metadata, params) {
         this.parent(null, IndicatorName);
+
         this._icon = new St.Icon({
             icon_name: TorIcon,
             style_class: 'system-status-icon'
         });
 
         this.actor.add_child(this._icon);
+        this.actor.connect('button-press-event', Lang.bind(this, function(actor, event) {
+            if (event.get_click_count() >= 2) {
+                log('TOR DOUBLE CLICK!!!');
+            }
+        }));
     }
 });
 
