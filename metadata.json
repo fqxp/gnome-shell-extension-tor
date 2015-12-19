@@ -2,10 +2,7 @@
   "description": "Change tor identity",
   "name": "Tor",
   "shell-version": [
-    "3.10",
-    "3.12",
-    "3.14",
-    "3.16"
+    "3.14"
   ],
   "url": "",
   "uuid": "change-tor-identity@fqxp.de",
