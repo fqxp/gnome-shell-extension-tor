@@ -14,15 +14,17 @@ const TorControlClient = new Lang.Class({
     },
 
     close: function() {
-        this._outputStream.close(null);
-        this._inputStream.close(null);
+        if (this._connection.is_connected()) {
+            this._outputStream.close(null);
+            this._inputStream.close(null);
+        }
     },
 
     _connect: function() {
         var socketClient = new Gio.SocketClient();
-        var connection = socketClient.connect_to_host('127.0.0.1:9051', null, null);
-        this._inputStream = new Gio.DataInputStream({base_stream: connection.get_input_stream()});
-        this._outputStream = new Gio.DataOutputStream({base_stream: connection.get_output_stream()});
+        this._connection = socketClient.connect_to_host('127.0.0.1:9051', null, null);
+        this._inputStream = new Gio.DataInputStream({base_stream: this._connection.get_input_stream()});
+        this._outputStream = new Gio.DataOutputStream({base_stream: this._connection.get_output_stream()});
     },
 
     _updateProtocolInfo: function() {

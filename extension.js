@@ -4,6 +4,7 @@
 const Lang = imports.lang;
 const St = imports.gi.St;
 const Main = imports.ui.main;
+const Notify = imports.gi.Notify;
 const PanelMenu = imports.ui.panelMenu;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -11,8 +12,8 @@ const TorControlClient = Me.imports.tor_control_client.TorControlClient;
 
 const TorIcon = 'tor';
 
-let torButton;
-let torControlClient;
+let torButton = null;
+let torControlClient = null;
 
 const TorButton = new Lang.Class({
     Name: 'TorButton',
@@ -43,14 +44,23 @@ function init(extensionMeta) {
 }
 
 function enable() {
-    torControlClient = new TorControlClient();
-    torButton = new TorButton();
-    Main.panel.addToStatusArea(torButton.Name, torButton);
+    try {
+        torControlClient = new TorControlClient();
+        torButton = new TorButton();
+        Main.panel.addToStatusArea(torButton.Name, torButton);
+    } catch (e) {
+        Main.notifyError('Error starting extension: ' + e);
+        disable();
+    }
 }
 
 function disable() {
-    torButton.destroy();
-    torButton = null;
-    torControlClient.close();
-    torControlClient = null;
+    if (torButton !== null) {
+        torButton.destroy();
+        torButton = null;
+    }
+    if (torControlClient !== null) {
+        torControlClient.close();
+        torControlClient = null;
+    }
 }
