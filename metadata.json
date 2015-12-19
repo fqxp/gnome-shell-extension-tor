@@ -1,10 +1,10 @@
 {
-  "description": "Change Tor Identity",
-  "name": "Tor",
+  "name": "Tor Control",
+  "description": "Change Tor Identity by double-clicking Tor icon",
   "shell-version": [
     "3.14"
   ],
-  "url": "",
-  "uuid": "change-tor-identity@fqxp.de",
+  "url": "https://github.com/fqxp/gnome-shell-extension-tor",
+  "uuid": "tor@gnome-shell-extension.fqxp.de",
   "version": 1
 }
