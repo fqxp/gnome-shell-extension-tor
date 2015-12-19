@@ -1,5 +1,5 @@
 {
-  "description": "Change tor identity",
+  "description": "Change Tor Identity",
   "name": "Tor",
   "shell-version": [
     "3.14"
