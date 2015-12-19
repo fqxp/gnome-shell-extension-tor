@@ -32,9 +32,19 @@ const TorButton = new Lang.Class({
         this.actor.add_child(this._icon);
         this.actor.connect('button-press-event', Lang.bind(this, function(actor, event) {
             if (event.get_click_count() >= 2) {
-                log('TOR DOUBLE CLICK!!!');
+                this._switchTorIdentity();
             }
         }));
+    },
+
+    _switchTorIdentity: function() {
+        try {
+            this._torControlClient.switchIdentity();
+            Main.notify('Switched to a new Tor identity!');
+        } catch (e) {
+            log(e);
+            Main.notifyError('Could not switch Tor identity: ' + e);
+        }
     }
 });
 
@@ -46,9 +56,10 @@ function init(extensionMeta) {
 function enable() {
     try {
         torControlClient = new TorControlClient();
-        torButton = new TorButton();
+        torButton = new TorButton(torControlClient);
         Main.panel.addToStatusArea(torButton.Name, torButton);
     } catch (e) {
+        log(e);
         Main.notifyError('Error starting extension: ' + e);
         disable();
     }

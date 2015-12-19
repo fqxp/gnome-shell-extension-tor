@@ -11,12 +11,30 @@ const TorControlClient = new Lang.Class({
         this._connect();
         this._updateProtocolInfo();
         this._ensureProtocolCompatibility();
+        this.authenticate();
     },
 
     close: function() {
         if (this._connection.is_connected()) {
             this._outputStream.close(null);
             this._inputStream.close(null);
+        }
+    },
+
+    authenticate: function() {
+        var cookie = this._readAuthCookie();
+        var reply = this._runCommand('AUTHENTICATE ' + cookie);
+
+        if (reply.statusCode != 250) {
+            throw 'Could not authenticate, reason: ' + reply.replyLines.join('\n');
+        }
+    },
+
+    switchIdentity: function() {
+        var reply = this._runCommand('SIGNAL NEWNYM');
+
+        if (reply.statusCode != 250) {
+            throw 'Could not change Tor identity, reason: ' + reply.replyLines.join('\n');
         }
     },
 
@@ -51,7 +69,7 @@ const TorControlClient = new Lang.Class({
 
                     if (authMethods.indexOf('COOKIE') != -1 || authMethods.indexOf('SAFECOOKIE') != -1) {
                         let cookieArg = tokens[2].split('=');
-                        authCookieFile = cookieArg[1];
+                        authCookieFile = cookieArg[1].substr(1, cookieArg[1].length - 2);   // strip quotes
                     }
                     break;
             }
@@ -101,6 +119,24 @@ const TorControlClient = new Lang.Class({
             isMidReplyLine: (line[3] == '-'),
             replyLine: line.substring(4)
         }
+    },
+
+    _readAuthCookie: function() {
+        var file = Gio.File.new_for_path(this._protocolInfo.authCookieFile);
+        var inputStream = file.read(null);
+        var cookieData = inputStream.read_bytes(32, null, null).get_data();
+        inputStream.close(null);
+
+        var authCookie = '';
+        for (var i = 0; i < cookieData.length; i++) {
+            let hexByte = cookieData[i].toString(16);
+            if (hexByte.length == 1) {
+                hexByte = '0' + hexByte;
+            }
+            authCookie += hexByte;
+        }
+
+        return authCookie;
     }
 });
 
