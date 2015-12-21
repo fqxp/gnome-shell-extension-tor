@@ -10,6 +10,8 @@ Suppose beta status.
 ## TODO
 * Add other authentication methods
 * Make configurable (host/port to use)
+* Use async communication with Tor server, making it possible to react to
+  signals from the server
 
 ## Ideas
 * Add option for switching identity regularly

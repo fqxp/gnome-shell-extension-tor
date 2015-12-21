@@ -48,10 +48,10 @@ const TorButton = new Lang.Class({
         });
 
         this.actor.add_child(this._icon);
-        this.actor.connect('button-press-event', Lang.bind(this, function(actor, event) {
-            if (event.get_click_count() >= 2) {
-                this._switchTorIdentity();
-            }
+
+        this.menu.addAction('Switch Tor Identity', Lang.bind(this, function(event) {
+            this._switchTorIdentity();
+            log('Switched to a new Tor identity!');
         }));
     },
 
