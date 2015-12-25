@@ -19,6 +19,7 @@ along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/
 */
 'use strict';
 
+const Gtk = imports.gi.Gtk;
 const Main = imports.ui.main;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -29,20 +30,15 @@ let torButton = null;
 let torControlClient = null;
 
 function init(extensionMeta) {
-    let theme = imports.gi.Gtk.IconTheme.get_default();
+    let theme = Gtk.IconTheme.get_default();
     theme.append_search_path(extensionMeta.path + "/icons");
 }
 
 function enable() {
-    try {
-        torControlClient = new TorControlClient();
-        torButton = new TorButton(torControlClient);
-        Main.panel.addToStatusArea(torButton.Name, torButton);
-    } catch (e) {
-        log(e);
-        Main.notifyError('Error starting extension: ' + e);
-        disable();
-    }
+    torControlClient = new TorControlClient();
+    torButton = new TorButton(torControlClient);
+    Main.panel.addToStatusArea(torButton.Name, torButton);
+    torControlClient.openConnection();
 }
 
 function disable() {

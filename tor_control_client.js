@@ -21,25 +21,28 @@ along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/
 
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
+const Signals = imports.signals;
 
 const TorControlClient = new Lang.Class({
     Name: 'TorControlClient',
 
-    _init: function() {
+    openConnection: function() {
         this._connect();
         this._updateProtocolInfo();
         this._ensureProtocolCompatibility();
-        this.authenticate();
+        this._authenticate();
+        this.emit('changed-connection-state', 'connected');
     },
 
-    close: function() {
+    closeConnection: function() {
         if (this._connection.is_connected()) {
             this._outputStream.close(null);
             this._inputStream.close(null);
+            this.emit('changed-connection-state', 'disconnected');
         }
     },
 
-    authenticate: function() {
+    _authenticate: function() {
         var cookie = this._readAuthCookie();
         var reply = this._runCommand('AUTHENTICATE ' + cookie);
 
@@ -52,6 +55,7 @@ const TorControlClient = new Lang.Class({
         var reply = this._runCommand('SIGNAL NEWNYM');
 
         if (reply.statusCode != 250) {
+            this.emit('changed-connection-state', 'failed');
             throw 'Could not change Tor identity, reason: ' + reply.replyLines.join('\n');
         }
     },
@@ -158,3 +162,4 @@ const TorControlClient = new Lang.Class({
     }
 });
 
+Signals.addSignalMethods(TorControlClient.prototype);

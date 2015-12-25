@@ -27,7 +27,8 @@ const St = imports.gi.St;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const TorPopupMenu = Me.imports.ui.tor_popup_menu.TorPopupMenu;
 
-const TorIcon = 'tor';
+const TorConnectedIcon = 'tor-connected';
+const TorDisconnectedIcon = 'tor-disconnected';
 
 const TorButton = new Lang.Class({
     Name: 'TorButton',
@@ -38,8 +39,13 @@ const TorButton = new Lang.Class({
 
         this._torControlClient = torControlClient;
 
+        this._buildUi();
+        this._bindEvents();
+    },
+
+    _buildUi: function() {
         this._icon = new St.Icon({
-            icon_name: TorIcon,
+            icon_name: TorDisconnectedIcon,
             style_class: 'system-status-icon'
         });
 
@@ -47,5 +53,21 @@ const TorButton = new Lang.Class({
 
         this._menu = new TorPopupMenu(this.actor, this._torControlClient);
         this.setMenu(this._menu);
+    },
+
+    _bindEvents: function() {
+        this._torControlClient.connect('changed-connection-state', Lang.bind(this, this._changedConnectionState));
+    },
+
+    _changedConnectionState: function(source, state) {
+        log('NEW STATE: ' + state);
+        switch (state) {
+            case 'connected':
+                this._icon.icon_name = TorConnectedIcon;
+                break;
+            case 'disconnected':
+                this._icon.icon_name = TorDisconnectedIcon;
+                break;
+        }
     }
 });
