@@ -1,4 +1,4 @@
-// ex: set sw=4:ts=4
+// vim: set sw=4:ts=4
 /*
 Copyright 2015 Frank Ploss <frank@fqxp.de>.
 
@@ -21,31 +21,31 @@ along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/
 
 const Lang = imports.lang;
 const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const TorPopupMenu = Me.imports.ui.tor_popup_menu.TorPopupMenu;
+const TorPopupMenu = new Lang.Class({
+    Name: 'TorPopupMenu',
+    Extends: PopupMenu.PopupMenu,
 
-const TorIcon = 'tor';
-
-const TorButton = new Lang.Class({
-    Name: 'TorButton',
-    Extends: PanelMenu.Button,
-
-    _init: function(torControlClient) {
-        this.parent(null, this.Name);
-
+    _init: function(actor, torControlClient) {
         this._torControlClient = torControlClient;
+        this.parent(actor, 0.25, St.Side.TOP);
 
-        this._icon = new St.Icon({
-            icon_name: TorIcon,
-            style_class: 'system-status-icon'
-        });
+        this._addActions();
+    },
 
-        this.actor.add_child(this._icon);
+    _addActions: function() {
+        this.addAction('Switch Tor Identity', Lang.bind(this, this._switchTorIdentity));
+    },
 
-        this._menu = new TorPopupMenu(this.actor, this._torControlClient);
-        this.setMenu(this._menu);
+    _switchTorIdentity: function() {
+        try {
+            this._torControlClient.switchIdentity();
+            Main.notify('Switched to a new Tor identity!');
+        } catch (e) {
+            log(e);
+            Main.notifyError('Could not switch Tor identity: ' + e);
+        }
     }
 });
