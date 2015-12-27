@@ -47,7 +47,7 @@ function disable() {
         torButton = null;
     }
     if (torControlClient !== null) {
-        torControlClient.close();
+        torControlClient.closeConnection();
         torControlClient = null;
     }
 }

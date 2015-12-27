@@ -23,31 +23,40 @@ const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Signals = imports.signals;
 
+const TorProtocolError = new Lang.Class({
+    Name: 'TorProtocolError',
+    Extends: Error,
+
+    _init: function(message, statusCode) {
+        this.parent(message);
+        this.statusCode = statusCode;
+    }
+});
+
 const TorControlClient = new Lang.Class({
     Name: 'TorControlClient',
 
-    openConnection: function() {
-        this._connect();
-        this._updateProtocolInfo();
-        this._ensureProtocolCompatibility();
-        this._authenticate();
-        this.emit('changed-connection-state', 'connected');
+    _init: function() {
+        this._fail_reason = null;
     },
 
-    closeConnection: function() {
-        if (this._connection.is_connected()) {
-            this._outputStream.close(null);
-            this._inputStream.close(null);
-            this.emit('changed-connection-state', 'disconnected');
+    openConnection: function() {
+        try {
+            this._connect();
+            this._updateProtocolInfo();
+            this._ensureProtocolCompatibility();
+            this._authenticate();
+            this.emit('changed-connection-state', 'connected');
+        } catch (e if (e instanceof Gio.IOErrorEnum || e instanceof TorProtocolError)) {
+            this.emit('changed-connection-state', 'disconnected', e.message);
         }
     },
 
-    _authenticate: function() {
-        var cookie = this._readAuthCookie();
-        var reply = this._runCommand('AUTHENTICATE ' + cookie);
-
-        if (reply.statusCode != 250) {
-            throw 'Could not authenticate, reason: ' + reply.replyLines.join('\n');
+    closeConnection: function() {
+        if (this._connection && this._connection.is_connected()) {
+            this._outputStream.close(null);
+            this._inputStream.close(null);
+            this.emit('changed-connection-state', 'disconnected');
         }
     },
 
@@ -55,8 +64,13 @@ const TorControlClient = new Lang.Class({
         var reply = this._runCommand('SIGNAL NEWNYM');
 
         if (reply.statusCode != 250) {
-            this.emit('changed-connection-state', 'failed');
-            throw 'Could not change Tor identity, reason: ' + reply.replyLines.join('\n');
+            this.emit(
+                'protocol-error',
+                'Could not switch Tor identity: ' + reply.replyLines.join('\n'),
+                reply.statusCode
+            );
+        } else {
+            this.emit('switched-tor-identity');
         }
     },
 
@@ -71,7 +85,9 @@ const TorControlClient = new Lang.Class({
         var reply = this._runCommand('PROTOCOLINFO');
 
         if (reply.statusCode != 250) {
-            throw "Could not read protocol info";
+            throw new TorProtocolError(
+                    'Could not read protocol info, reason: ' + reply.replyLines.join('\n'),
+                    reply.statusCode);
         }
 
         var protocolInfoVersion;
@@ -106,7 +122,19 @@ const TorControlClient = new Lang.Class({
 
     _ensureProtocolCompatibility: function() {
         if (this._protocolInfo.protocolInfoVersion != 1) {
-            throw 'Cannot handle tor protocol version ' + this._protocolInfo.protocolInfoVersion;
+            throw new TorProtocolError('Cannot handle tor protocol version ' + this._protocolInfo.protocolInfoVersion);
+        }
+    },
+
+    _authenticate: function() {
+        var cookie = this._readAuthCookie();
+        var reply = this._runCommand('AUTHENTICATE ' + cookie);
+
+        if (reply.statusCode != 250) {
+            throw new TorProtocolError(
+                'Could not authenticate, reason: ' + reply.replyLines.join('\n'),
+                statusCode
+            );
         }
     },
 

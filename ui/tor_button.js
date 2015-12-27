@@ -22,9 +22,11 @@ along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/
 const Lang = imports.lang;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const TorDisconnectedMenu = Me.imports.ui.tor_disconnected_menu.TorDisconnectedMenu;
 const TorPopupMenu = Me.imports.ui.tor_popup_menu.TorPopupMenu;
 
 const TorConnectedIcon = 'tor-connected';
@@ -41,6 +43,8 @@ const TorButton = new Lang.Class({
 
         this._buildUi();
         this._bindEvents();
+
+        this._currentState = null;
     },
 
     _buildUi: function() {
@@ -51,23 +55,45 @@ const TorButton = new Lang.Class({
 
         this.actor.add_child(this._icon);
 
-        this._menu = new TorPopupMenu(this.actor, this._torControlClient);
-        this.setMenu(this._menu);
+        //var dummyMenu = new PopupMenu.PopupDummyMenu(this.actor);
+        //this.setMenu(dummyMenu);
+        //Main.panel.menuManager.addMenu(dummyMenu);
     },
 
     _bindEvents: function() {
-        this._torControlClient.connect('changed-connection-state', Lang.bind(this, this._changedConnectionState));
+        this._torControlClient.connect('changed-connection-state', Lang.bind(this, this._onChangedConnectionState));
+        this._torControlClient.connect('switched-tor-identity', Lang.bind(this, this._onSwitchedTorIdentity));
+        this._torControlClient.connect('protocol-error', Lang.bind(this, this._onProtocolError));
     },
 
-    _changedConnectionState: function(source, state) {
-        log('NEW STATE: ' + state);
+    _onChangedConnectionState: function(source, state, message) {
+        if (this._currentState == state)
+            return;
+
+        this._currentState = state;
+
         switch (state) {
             case 'connected':
                 this._icon.icon_name = TorConnectedIcon;
+                this._menu = new TorPopupMenu(this.actor, this._torControlClient);
+                this.setMenu(this._menu);
+                Main.panel.menuManager.addMenu(this._menu);
                 break;
             case 'disconnected':
                 this._icon.icon_name = TorDisconnectedIcon;
+                this._menu = new TorDisconnectedMenu(this.actor, this._torControlClient);
+                this.setMenu(this._menu);
+                Main.panel.menuManager.addMenu(this._menu);
                 break;
         }
+    },
+
+    _onSwitchedTorIdentity: function() {
+        Main.notify('Switched to a new Tor identity!');
+    },
+
+    _onProtocolError: function(source, message, statusCode) {
+        Main.notifyError(message);
+        log('Tor control procotol error (status code ' + statusCode + '): ' + reason)
     }
 });

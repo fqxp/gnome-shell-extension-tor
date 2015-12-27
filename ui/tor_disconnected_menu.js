@@ -23,8 +23,8 @@ const Lang = imports.lang;
 const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 
-const TorPopupMenu = new Lang.Class({
-    Name: 'TorPopupMenu',
+const TorDisconnectedMenu = new Lang.Class({
+    Name: 'TorDisconnectedMenu',
     Extends: PopupMenu.PopupMenu,
 
     _init: function(actor, torControlClient) {
@@ -34,11 +34,23 @@ const TorPopupMenu = new Lang.Class({
         this._addActions();
     },
 
-    _addActions: function() {
-        this.addAction('Switch Tor Identity', Lang.bind(this, this._switchTorIdentity));
+    destroy: function() {
+        this.parent(arguments);
     },
 
-    _switchTorIdentity: function() {
-        this._torControlClient.switchIdentity();
+    _addActions: function() {
+        var errorMessageMenuItem = new PopupMenu.PopupBaseMenuItem({reactive: false});
+        errorMessageMenuItem.setSensitive(false);
+        errorMessageMenuItem.actor.add_actor(new St.Label({
+            text: 'ERROR running'
+        }));
+        this.addMenuItem(errorMessageMenuItem);
+
+        this.addAction('Reconnect', Lang.bind(this, this._reconnect));
+    },
+
+    _reconnect: function() {
+        this._torControlClient.connect('changed-connection-state', function() {})
+        this._torControlClient.openConnection();
     }
 });
