@@ -76,7 +76,7 @@ const TorButton = new Lang.Class({
     },
 
     _showConnectedMenu: function() {
-        if (this._menu instanceof TorConnectedIcon) {
+        if (this._menu instanceof TorPopupMenu) {
             return;
         }
 

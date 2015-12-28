@@ -49,11 +49,5 @@ const TorDisconnectedMenu = new Lang.Class({
         this._msgLabel = new St.Label();
         errorMessageMenuItem.actor.add_actor(this._msgLabel);
         this.addMenuItem(errorMessageMenuItem);
-
-        this.addAction('Reconnect', Lang.bind(this, this._reconnect));
     },
-
-    _reconnect: function() {
-        this._torControlClient.openConnection();
-    }
 });

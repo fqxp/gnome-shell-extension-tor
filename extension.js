@@ -38,19 +38,16 @@ function init(extensionMeta) {
 }
 
 function enable() {
-    torControlClient = new TorControlClient(TOR_CONTROL_HOST, TOR_CONTROL_PORT);
+    torControlClient = new TorControlClient(TOR_CONTROL_HOST, TOR_CONTROL_PORT, true);
     torButton = new TorButton(torControlClient);
     Main.panel.addToStatusArea(torButton.Name, torButton);
     torControlClient.openConnection();
 }
 
 function disable() {
-    if (torButton !== null) {
+    if (torControlClient !== null)
+        torControlClient.destroy();
+
+    if (torButton !== null)
         torButton.destroy();
-        torButton = null;
-    }
-    if (torControlClient !== null) {
-        torControlClient.closeConnection();
-        torControlClient = null;
-    }
 }

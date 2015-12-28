@@ -20,6 +20,7 @@ along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/
 'use strict';
 
 const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 const Signals = imports.signals;
 
@@ -44,10 +45,16 @@ const TorControlClient = new Lang.Class({
     Name: 'TorControlClient',
 
 
-    _init: function(host, port) {
+    _init: function(host, port, autoRetry) {
         this._host = host;
         this._port = port;
-        this._fail_reason = null;
+        this._autoRetry = autoRetry;
+        this._autoRetryTimerId = null;
+    },
+
+    destroy: function() {
+        this.stopAutoRetry();
+        this.closeConnection();
     },
 
     openConnection: function() {
@@ -57,11 +64,13 @@ const TorControlClient = new Lang.Class({
             this._ensureProtocolCompatibility();
             this._authenticate();
             this.emit('changed-connection-state', 'ready');
+            this.stopAutoRetry();
         } catch (e if e instanceof TorConnectionError) {
             this.closeConnection(e.message);
+            this.startAutoRetry();
         } catch (e if e instanceof TorProtocolError) {
-            //this.emit('protocol-error', 'Error while connecting to Tor control port', e.message);
             this.closeConnection(e.message);
+            this.startAutoRetry();
         }
     },
 
@@ -73,6 +82,28 @@ const TorControlClient = new Lang.Class({
         this._connection = null;
 
         this.emit('changed-connection-state', 'closed', reason);
+    },
+
+    startAutoRetry: function() {
+        if (!this._autoRetry)
+            return;
+
+        if (this._autoRetryTimerId !== null)
+            return;
+
+        this._autoRetryTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, function() {
+            //log('Retrying to open connection ...');
+            this.openConnection();
+            return this._connection === null || !this._connection.is_connected();
+        }));
+    },
+
+    stopAutoRetry: function() {
+        if (this._autoRetryTimerId === null)
+            return;
+
+        GLib.source_remove(this._autoRetryTimerId);
+        this._autoRetryTimerId = null;
     },
 
     switchIdentity: function() {
@@ -173,6 +204,7 @@ const TorControlClient = new Lang.Class({
             if (line === null) {
                 let reason = 'Lost connection to Tor server';
                 this.closeConnection(reason);
+                this.startAutoRetry();
                 return {replyLines: [reason]};
             }
 
