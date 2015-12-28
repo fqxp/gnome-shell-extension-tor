@@ -26,6 +26,9 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const TorButton = Me.imports.ui.tor_button.TorButton;
 const TorControlClient = Me.imports.tor_control_client.TorControlClient;
 
+const TOR_CONTROL_HOST = '127.0.0.1';
+const TOR_CONTROL_PORT = 9051;
+
 let torButton = null;
 let torControlClient = null;
 
@@ -35,7 +38,7 @@ function init(extensionMeta) {
 }
 
 function enable() {
-    torControlClient = new TorControlClient('127.0.0.1', 9051);
+    torControlClient = new TorControlClient(TOR_CONTROL_HOST, TOR_CONTROL_PORT);
     torButton = new TorButton(torControlClient);
     Main.panel.addToStatusArea(torButton.Name, torButton);
     torControlClient.openConnection();

@@ -166,8 +166,11 @@ const TorControlClient = new Lang.Class({
 
         do {
             let line = this._readLine();
-            var reply = this._parseLine(line);
 
+            if (line === null)
+                return {replyLines: ['Lost connection to Tor server']};
+
+            var reply = this._parseLine(line);
             statusCode = reply.statusCode;
             replyLines.push(reply.replyLine);
         } while (reply.isMidReplyLine);
@@ -180,7 +183,8 @@ const TorControlClient = new Lang.Class({
 
     _readLine: function() {
         [line, length] = this._inputStream.read_line(null, null);
-        return line.toString().trim();
+
+        return (line !== null) ? line.toString().trim() : null;
     },
 
     _parseLine: function(line) {

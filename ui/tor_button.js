@@ -64,7 +64,7 @@ const TorButton = new Lang.Class({
         this._torControlClient.connect('protocol-error', Lang.bind(this, this._onProtocolError));
     },
 
-    _onChangedConnectionState: function(source, state, message, reason) {
+    _onChangedConnectionState: function(source, state, reason) {
         switch (state) {
             case 'ready':
                 this._showConnectedMenu();
