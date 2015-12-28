@@ -27,8 +27,9 @@ const TorDisconnectedMenu = new Lang.Class({
     Name: 'TorDisconnectedMenu',
     Extends: PopupMenu.PopupMenu,
 
-    _init: function(actor, torControlClient) {
+    _init: function(actor, torControlClient, reason) {
         this._torControlClient = torControlClient;
+        this._reason = reason;
         this.parent(actor, 0.25, St.Side.TOP);
 
         this._addActions();
@@ -42,7 +43,7 @@ const TorDisconnectedMenu = new Lang.Class({
         var errorMessageMenuItem = new PopupMenu.PopupBaseMenuItem({reactive: false});
         errorMessageMenuItem.setSensitive(false);
         errorMessageMenuItem.actor.add_actor(new St.Label({
-            text: 'ERROR running'
+            text: 'No connection. Reason: ' + this._reason
         }));
         this.addMenuItem(errorMessageMenuItem);
 

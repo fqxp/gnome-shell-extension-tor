@@ -35,7 +35,7 @@ function init(extensionMeta) {
 }
 
 function enable() {
-    torControlClient = new TorControlClient();
+    torControlClient = new TorControlClient('127.0.0.1', 9051);
     torButton = new TorButton(torControlClient);
     Main.panel.addToStatusArea(torButton.Name, torButton);
     torControlClient.openConnection();

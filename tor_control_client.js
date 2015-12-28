@@ -23,12 +23,19 @@ const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 const Signals = imports.signals;
 
+const TorConnectionError = new Lang.Class({
+    Name: 'TorConnectionError',
+
+    _init: function(message) {
+        this.message = message;
+    }
+})
+
 const TorProtocolError = new Lang.Class({
     Name: 'TorProtocolError',
-    Extends: Error,
 
     _init: function(message, statusCode) {
-        this.parent(message);
+        this.message = message;
         this.statusCode = statusCode;
     }
 });
@@ -36,47 +43,59 @@ const TorProtocolError = new Lang.Class({
 const TorControlClient = new Lang.Class({
     Name: 'TorControlClient',
 
-    _init: function() {
+
+    _init: function(host, port) {
+        this._host = host;
+        this._port = port;
         this._fail_reason = null;
     },
 
     openConnection: function() {
         try {
-            this._connect();
+            this._connect(this._host, this._port);
             this._updateProtocolInfo();
             this._ensureProtocolCompatibility();
             this._authenticate();
-            this.emit('changed-connection-state', 'connected');
-        } catch (e if (e instanceof Gio.IOErrorEnum || e instanceof TorProtocolError)) {
-            this.emit('changed-connection-state', 'disconnected', e.message);
+            this.emit('changed-connection-state', 'ready');
+        } catch (e if e instanceof TorConnectionError) {
+            this.closeConnection(e.message);
+        } catch (e if e instanceof TorProtocolError) {
+            //this.emit('protocol-error', 'Error while connecting to Tor control port', e.message);
+            this.closeConnection(e.message);
         }
     },
 
-    closeConnection: function() {
+    closeConnection: function(reason) {
         if (this._connection && this._connection.is_connected()) {
-            this._outputStream.close(null);
-            this._inputStream.close(null);
-            this.emit('changed-connection-state', 'disconnected');
+            this._connection.close(null);
+            this.emit('changed-connection-state', 'closed', reason);
         }
     },
 
     switchIdentity: function() {
         var reply = this._runCommand('SIGNAL NEWNYM');
 
-        if (reply.statusCode != 250) {
+        if (reply.statusCode == 250) {
+            this.emit('switched-tor-identity');
+        } else {
             this.emit(
                 'protocol-error',
                 'Could not switch Tor identity: ' + reply.replyLines.join('\n'),
                 reply.statusCode
             );
-        } else {
-            this.emit('switched-tor-identity');
         }
     },
 
-    _connect: function() {
+    _connect: function(host, port) {
         var socketClient = new Gio.SocketClient();
-        this._connection = socketClient.connect_to_host('127.0.0.1:9051', null, null);
+
+        try {
+            this._connection = socketClient.connect_to_host(host + ':' + port, null, null);
+        } catch (e if e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CONNECTION_REFUSED)) {
+            throw new TorConnectionError(
+                    'Could not connect to Tor control port (Tor is not listening on ' + host + ':' + port + ')');
+        }
+
         this._inputStream = new Gio.DataInputStream({base_stream: this._connection.get_input_stream()});
         this._outputStream = new Gio.DataOutputStream({base_stream: this._connection.get_output_stream()});
     },
@@ -156,11 +175,12 @@ const TorControlClient = new Lang.Class({
         return {
             statusCode: statusCode,
             replyLines: replyLines
-        }
+        };
     },
 
     _readLine: function() {
-        return this._inputStream.read_line(null, null)[0].toString().trim();
+        [line, length] = this._inputStream.read_line(null, null);
+        return line.toString().trim();
     },
 
     _parseLine: function(line) {

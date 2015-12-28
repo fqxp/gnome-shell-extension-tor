@@ -55,9 +55,7 @@ const TorButton = new Lang.Class({
 
         this.actor.add_child(this._icon);
 
-        //var dummyMenu = new PopupMenu.PopupDummyMenu(this.actor);
-        //this.setMenu(dummyMenu);
-        //Main.panel.menuManager.addMenu(dummyMenu);
+        this._showDisconnectedMenu();
     },
 
     _bindEvents: function() {
@@ -66,26 +64,29 @@ const TorButton = new Lang.Class({
         this._torControlClient.connect('protocol-error', Lang.bind(this, this._onProtocolError));
     },
 
-    _onChangedConnectionState: function(source, state, message) {
-        if (this._currentState == state)
-            return;
-
-        this._currentState = state;
-
+    _onChangedConnectionState: function(source, state, message, reason) {
         switch (state) {
-            case 'connected':
-                this._icon.icon_name = TorConnectedIcon;
-                this._menu = new TorPopupMenu(this.actor, this._torControlClient);
-                this.setMenu(this._menu);
-                Main.panel.menuManager.addMenu(this._menu);
+            case 'ready':
+                this._showConnectedMenu();
                 break;
-            case 'disconnected':
-                this._icon.icon_name = TorDisconnectedIcon;
-                this._menu = new TorDisconnectedMenu(this.actor, this._torControlClient);
-                this.setMenu(this._menu);
-                Main.panel.menuManager.addMenu(this._menu);
+            case 'closed':
+                this._showDisconnectedMenu(reason);
                 break;
         }
+    },
+
+    _showConnectedMenu: function() {
+        this._icon.icon_name = TorConnectedIcon;
+        this._menu = new TorPopupMenu(this.actor, this._torControlClient);
+        this.setMenu(this._menu);
+        Main.panel.menuManager.addMenu(this._menu);
+    },
+
+    _showDisconnectedMenu: function(reason) {
+        this._icon.icon_name = TorDisconnectedIcon;
+        this._menu = new TorDisconnectedMenu(this.actor, this._torControlClient, reason);
+        this.setMenu(this._menu);
+        Main.panel.menuManager.addMenu(this._menu);
     },
 
     _onSwitchedTorIdentity: function() {
@@ -93,7 +94,7 @@ const TorButton = new Lang.Class({
     },
 
     _onProtocolError: function(source, message, statusCode) {
-        Main.notifyError(message);
+        Main.notifyError('Tor: ' + message);
         log('Tor control procotol error (status code ' + statusCode + '): ' + reason)
     }
 });
