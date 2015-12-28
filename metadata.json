@@ -1,6 +1,6 @@
 {
   "name": "Tor Control",
-  "description": "Change Tor Identity by double-clicking Tor icon",
+  "description": "Change Tor identity from the GNOME Shell panel",
   "shell-version": [
     "3.14"
   ],
