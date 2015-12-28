@@ -55,7 +55,7 @@ const TorButton = new Lang.Class({
 
         this.actor.add_child(this._icon);
 
-        this._showDisconnectedMenu();
+        this._showDisconnectedMenu('Haven’t tried to connect yet');
     },
 
     _bindEvents: function() {
@@ -76,6 +76,10 @@ const TorButton = new Lang.Class({
     },
 
     _showConnectedMenu: function() {
+        if (this._menu instanceof TorConnectedIcon) {
+            return;
+        }
+
         this._icon.icon_name = TorConnectedIcon;
         this._menu = new TorPopupMenu(this.actor, this._torControlClient);
         this.setMenu(this._menu);
@@ -83,6 +87,11 @@ const TorButton = new Lang.Class({
     },
 
     _showDisconnectedMenu: function(reason) {
+        if (this._menu instanceof TorDisconnectedMenu) {
+            this._menu.setReason(reason);
+            return;
+        }
+
         this._icon.icon_name = TorDisconnectedIcon;
         this._menu = new TorDisconnectedMenu(this.actor, this._torControlClient, reason);
         this.setMenu(this._menu);
@@ -94,7 +103,7 @@ const TorButton = new Lang.Class({
     },
 
     _onProtocolError: function(source, message, statusCode) {
-        Main.notifyError('Tor: ' + message);
-        log('Tor control procotol error (status code ' + statusCode + '): ' + reason)
+        var msg = 'Tor control protocol error: ' + message + ' (status code' + statusCode + ')';
+        Main.notifyError(msg);
     }
 });

@@ -29,29 +29,31 @@ const TorDisconnectedMenu = new Lang.Class({
 
     _init: function(actor, torControlClient, reason) {
         this._torControlClient = torControlClient;
-        this._reason = reason;
         this.parent(actor, 0.25, St.Side.TOP);
 
         this._addActions();
+        this.setReason(reason);
     },
 
     destroy: function() {
         this.parent(arguments);
     },
 
+    setReason: function(reason) {
+        this._msgLabel.set_text('No connection. ' + reason);
+    },
+
     _addActions: function() {
         var errorMessageMenuItem = new PopupMenu.PopupBaseMenuItem({reactive: false});
         errorMessageMenuItem.setSensitive(false);
-        errorMessageMenuItem.actor.add_actor(new St.Label({
-            text: 'No connection. Reason: ' + this._reason
-        }));
+        this._msgLabel = new St.Label();
+        errorMessageMenuItem.actor.add_actor(this._msgLabel);
         this.addMenuItem(errorMessageMenuItem);
 
         this.addAction('Reconnect', Lang.bind(this, this._reconnect));
     },
 
     _reconnect: function() {
-        this._torControlClient.connect('changed-connection-state', function() {})
         this._torControlClient.openConnection();
     }
 });

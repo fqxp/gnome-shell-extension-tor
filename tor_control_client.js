@@ -68,8 +68,11 @@ const TorControlClient = new Lang.Class({
     closeConnection: function(reason) {
         if (this._connection && this._connection.is_connected()) {
             this._connection.close(null);
-            this.emit('changed-connection-state', 'closed', reason);
         }
+
+        this._connection = null;
+
+        this.emit('changed-connection-state', 'closed', reason);
     },
 
     switchIdentity: function() {
@@ -167,8 +170,11 @@ const TorControlClient = new Lang.Class({
         do {
             let line = this._readLine();
 
-            if (line === null)
-                return {replyLines: ['Lost connection to Tor server']};
+            if (line === null) {
+                let reason = 'Lost connection to Tor server';
+                this.closeConnection(reason);
+                return {replyLines: [reason]};
+            }
 
             var reply = this._parseLine(line);
             statusCode = reply.statusCode;
