@@ -27,15 +27,59 @@ const TorPopupMenu = new Lang.Class({
     Name: 'TorPopupMenu',
     Extends: PopupMenu.PopupMenu,
 
-    _init: function(actor, torControlClient) {
+    _init: function(actor, torControlClient, state) {
         this._torControlClient = torControlClient;
         this.parent(actor, 0.25, St.Side.TOP);
 
         this._addActions();
+        this.setState(state);
+    },
+
+    setState: function(state, reason) {
+        switch (state) {
+            case 'connected':
+                this._switchTorIdentityMenuItem.setSensitive(true);
+                this._setMessage(null);
+                break;
+            case 'disconnected':
+                this._switchTorIdentityMenuItem.setSensitive(false);
+                this._setMessage(reason);
+                break;
+        }
     },
 
     _addActions: function() {
-        this.addAction('Switch Tor Identity', Lang.bind(this, this._switchTorIdentity));
+        this._switchTorIdentityMenuItem =
+            this.addAction('Switch Tor Identity', Lang.bind(this, this._switchTorIdentity));
+    },
+
+    _setMessage: function(message) {
+        if (!message) {
+            this._removeMessageMenuItem();
+            return;
+        }
+
+        if (!this._messageMenuItem) {
+            this._addMessageMenuItem();
+        }
+
+        this._messageLabel.set_text('No connection. ' + message);
+    },
+
+    _addMessageMenuItem: function() {
+        this._messageMenuItem = new PopupMenu.PopupBaseMenuItem({reactive: false});
+        this._messageMenuItem.setSensitive(false);
+        this._messageLabel = new St.Label();
+        this._messageMenuItem.actor.add_actor(this._messageLabel);
+        this.addMenuItem(this._messageMenuItem, 0);
+    },
+
+    _removeMessageMenuItem: function() {
+        if (!this._messageMenuItem)
+            return;
+
+        this._messageMenuItem.destroy();
+        this._messageMenuItem = null;
     },
 
     _switchTorIdentity: function() {

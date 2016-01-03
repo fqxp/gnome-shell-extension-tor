@@ -26,7 +26,6 @@ const PopupMenu = imports.ui.popupMenu;
 const St = imports.gi.St;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
-const TorDisconnectedMenu = Me.imports.ui.tor_disconnected_menu.TorDisconnectedMenu;
 const TorPopupMenu = Me.imports.ui.tor_popup_menu.TorPopupMenu;
 
 const TorConnectedIcon = 'tor-connected';
@@ -43,8 +42,6 @@ const TorButton = new Lang.Class({
 
         this._buildUi();
         this._bindEvents();
-
-        this._currentState = null;
     },
 
     _buildUi: function() {
@@ -52,10 +49,10 @@ const TorButton = new Lang.Class({
             icon_name: TorDisconnectedIcon,
             style_class: 'system-status-icon'
         });
-
         this.actor.add_child(this._icon);
 
-        this._showDisconnectedMenu('Haven’t tried to connect yet');
+        var menu = new TorPopupMenu(this.actor, this._torControlClient, 'disconnected');
+        this.setMenu(menu);
     },
 
     _bindEvents: function() {
@@ -67,35 +64,14 @@ const TorButton = new Lang.Class({
     _onChangedConnectionState: function(source, state, reason) {
         switch (state) {
             case 'ready':
-                this._showConnectedMenu();
+                this._icon.icon_name = TorConnectedIcon;
+                this.menu.setState('connected');
                 break;
             case 'closed':
-                this._showDisconnectedMenu(reason);
+                this._icon.icon_name = TorDisconnectedIcon;
+                this.menu.setState('disconnected', reason);
                 break;
         }
-    },
-
-    _showConnectedMenu: function() {
-        if (this._menu instanceof TorPopupMenu) {
-            return;
-        }
-
-        this._icon.icon_name = TorConnectedIcon;
-        this._menu = new TorPopupMenu(this.actor, this._torControlClient);
-        this.setMenu(this._menu);
-        Main.panel.menuManager.addMenu(this._menu);
-    },
-
-    _showDisconnectedMenu: function(reason) {
-        if (this._menu instanceof TorDisconnectedMenu) {
-            this._menu.setReason(reason);
-            return;
-        }
-
-        this._icon.icon_name = TorDisconnectedIcon;
-        this._menu = new TorDisconnectedMenu(this.actor, this._torControlClient, reason);
-        this.setMenu(this._menu);
-        Main.panel.menuManager.addMenu(this._menu);
     },
 
     _onSwitchedTorIdentity: function() {
