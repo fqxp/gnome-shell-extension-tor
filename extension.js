@@ -23,6 +23,7 @@ const Gtk = imports.gi.Gtk;
 const Main = imports.ui.main;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Log = Me.imports.log.Log;
 const TorButton = Me.imports.ui.tor_button.TorButton;
 const TorControlClient = Me.imports.tor_control_client.TorControlClient;
 
@@ -42,6 +43,7 @@ function enable() {
     torButton = new TorButton(torControlClient);
     Main.panel.addToStatusArea(torButton.Name, torButton);
     torControlClient.openConnection();
+    Log.debug('Enabled Tor extension');
 }
 
 function disable() {
@@ -50,4 +52,6 @@ function disable() {
 
     if (torButton !== null)
         torButton.destroy();
+
+    Log.debug('Disabled Tor extension');
 }

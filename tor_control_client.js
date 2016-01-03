@@ -24,6 +24,9 @@ const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 const Signals = imports.signals;
 
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Log = Me.imports.log.Log;
+
 const TorConnectionError = new Lang.Class({
     Name: 'TorConnectionError',
 
@@ -58,6 +61,7 @@ const TorControlClient = new Lang.Class({
     },
 
     openConnection: function() {
+        Log.debug('Trying to reconnect ...');
         try {
             this._connect(this._host, this._port);
             this._updateProtocolInfo();
@@ -65,10 +69,13 @@ const TorControlClient = new Lang.Class({
             this._authenticate();
             this.emit('changed-connection-state', 'ready');
             this.stopAutoRetry();
+            Log.debug('Connected to Tor control port');
         } catch (e if e instanceof TorConnectionError) {
+            Log.debug('Could not connect to Tor control port');
             this.closeConnection(e.message);
             this.startAutoRetry();
         } catch (e if e instanceof TorProtocolError) {
+            Log.debug('Tor control protocol error: ' + e.message);
             this.closeConnection(e.message);
             this.startAutoRetry();
         }
@@ -92,15 +99,18 @@ const TorControlClient = new Lang.Class({
             return;
 
         this._autoRetryTimerId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, Lang.bind(this, function() {
-            //log('Retrying to open connection ...');
             this.openConnection();
             return this._connection === null || !this._connection.is_connected();
         }));
+
+        Log.debug('Started auto retry (timer id=' + this._autoRetryTimerId + ')');
     },
 
     stopAutoRetry: function() {
         if (this._autoRetryTimerId === null)
             return;
+
+        Log.debug('Stopping auto retry (timer id=' + this._autoRetryTimerId + ')');
 
         GLib.source_remove(this._autoRetryTimerId);
         this._autoRetryTimerId = null;
