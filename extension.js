@@ -1,6 +1,6 @@
 // ex: set sw=4:ts=4
 /*
-Copyright 2015 Frank Ploss <frank@fqxp.de>.
+Copyright 2015, 2016 Frank Ploss <frank@fqxp.de>.
 
 This file is part of gnome-shell-extension-tor.
 
@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/>./
+along with gnome-shell-extension-tor.  If not, see <http://www.gnu.org/licenses/>.
 */
 'use strict';
 
