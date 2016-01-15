@@ -2,7 +2,7 @@
   "name": "Tor Control",
   "description": "Change Tor identity from the panel",
   "shell-version": [
-    "3.14"
+    "3.14", "3.16", "3.18"
   ],
   "url": "https://github.com/fqxp/gnome-shell-extension-tor",
   "uuid": "tor@gnome-shell-extension.fqxp.de",
