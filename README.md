@@ -8,10 +8,10 @@ Currently only supports authentication via auth cookie.
 This extension has beta status.
 
 ## TODO
-[x] Replace "disconnected menu" by single extra menu item
-[x] Log extension name so that source is visible in logs
-[ ] Make configurable (host/port to use)
-[ ] Use async communication with Tor server, making it possible to react to
+### [x] Replace "disconnected menu" by single extra menu item
+### [x] Log extension name so that source is visible in logs
+### [ ] Make configurable (host/port to use)
+### [ ] Use async communication with Tor server, making it possible to react to
     signals from the server
 [ ] Add other authentication methods
 
